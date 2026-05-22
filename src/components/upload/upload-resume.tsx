@@ -62,6 +62,7 @@ export function UploadResume() {
       }
     },
     onUploadError: (error) => {
+      console.error("UploadThing onUploadError:", error);
       setUploadProgress((prev) =>
         prev ? { ...prev, status: "error", error: error.message } : null
       );
@@ -106,7 +107,14 @@ export function UploadResume() {
       status: "uploading",
     });
 
-    await startUpload([file]);
+    try {
+      await startUpload([file]);
+    } catch (error) {
+      console.error("startUpload threw:", error);
+      setUploadProgress((prev) =>
+        prev ? { ...prev, status: "error", error: String(error) } : null
+      );
+    }
   }, [startUpload]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
