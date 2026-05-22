@@ -21,32 +21,27 @@ function cleanText(text: string): string {
 // ─── PDF Extraction ─────────────────────────────────────────────────
 export async function extractPdf(buffer: Buffer): Promise<ExtractResult> {
   if (typeof globalThis.DOMMatrix === "undefined") {
-    try {
-      const { DOMMatrix } = await import("@napi-rs/canvas");
-      (globalThis as any).DOMMatrix = DOMMatrix;
-    } catch {
-      // minimal DOMMatrix shim for pdfjs-dist
-      (globalThis as any).DOMMatrix = class DOMMatrix {
-        constructor(init?: string) {
-          // no-op, pdfjs only needs existence
-        }
-        a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
-        static fromMatrix() { return new DOMMatrix(); }
-        static fromFloat64Array() { return new DOMMatrix(); }
-        invertSelf() { return this; }
-        multiplySelf() { return this; }
-        translateSelf() { return this; }
-        scaleSelf() { return this; }
-        rotateSelf() { return this; }
-        skewXSelf() { return this; }
-        skewYSelf() { return this; }
-        flipX() { return new DOMMatrix(); }
-        flipY() { return new DOMMatrix(); }
-        toFloat64Array() { return new Float64Array(16); }
-        toString() { return ""; }
-        get isIdentity() { return true; }
-      };
-    }
+    (globalThis as any).DOMMatrix = class DOMMatrix {
+      a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+      m11 = 1; m12 = 0; m13 = 0; m14 = 0;
+      m21 = 0; m22 = 1; m23 = 0; m24 = 0;
+      m31 = 0; m32 = 0; m33 = 1; m34 = 0;
+      m41 = 0; m42 = 0; m43 = 0; m44 = 1;
+      get isIdentity() { return true; }
+      static fromMatrix() { return new DOMMatrix(); }
+      static fromFloat64Array() { return new DOMMatrix(); }
+      invertSelf() { return this; }
+      multiplySelf() { return this; }
+      translateSelf() { return this; }
+      scaleSelf() { return this; }
+      rotateSelf() { return this; }
+      skewXSelf() { return this; }
+      skewYSelf() { return this; }
+      flipX() { return new DOMMatrix(); }
+      flipY() { return new DOMMatrix(); }
+      toFloat64Array() { return new Float64Array(16); }
+      toString() { return ""; }
+    };
   }
 
   const { PDFParse } = await import("pdf-parse");

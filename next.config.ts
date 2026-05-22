@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["pdfjs-dist"],
+  serverExternalPackages: ["pdfjs-dist", "pdf-parse", "@napi-rs/canvas"],
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
