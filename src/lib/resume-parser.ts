@@ -1,4 +1,3 @@
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -21,6 +20,36 @@ function cleanText(text: string): string {
 
 // ─── PDF Extraction ─────────────────────────────────────────────────
 export async function extractPdf(buffer: Buffer): Promise<ExtractResult> {
+  if (typeof globalThis.DOMMatrix === "undefined") {
+    try {
+      const { DOMMatrix } = await import("@napi-rs/canvas");
+      (globalThis as any).DOMMatrix = DOMMatrix;
+    } catch {
+      // minimal DOMMatrix shim for pdfjs-dist
+      (globalThis as any).DOMMatrix = class DOMMatrix {
+        constructor(init?: string) {
+          // no-op, pdfjs only needs existence
+        }
+        a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+        static fromMatrix() { return new DOMMatrix(); }
+        static fromFloat64Array() { return new DOMMatrix(); }
+        invertSelf() { return this; }
+        multiplySelf() { return this; }
+        translateSelf() { return this; }
+        scaleSelf() { return this; }
+        rotateSelf() { return this; }
+        skewXSelf() { return this; }
+        skewYSelf() { return this; }
+        flipX() { return new DOMMatrix(); }
+        flipY() { return new DOMMatrix(); }
+        toFloat64Array() { return new Float64Array(16); }
+        toString() { return ""; }
+        get isIdentity() { return true; }
+      };
+    }
+  }
+
+  const { PDFParse } = await import("pdf-parse");
   const pdf = new PDFParse({ data: new Uint8Array(buffer) });
   const textResult = await pdf.getText();
   pdf.destroy();
