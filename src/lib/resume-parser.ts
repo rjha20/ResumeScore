@@ -44,13 +44,27 @@ export async function extractPdf(buffer: Buffer): Promise<ExtractResult> {
     };
   }
 
-  const { PDFParse } = await import("pdf-parse");
-  const pdf = new PDFParse({ data: new Uint8Array(buffer) });
-  const textResult = await pdf.getText();
-  pdf.destroy();
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    `https://unpkg.com/pdfjs-dist@5.4.296/legacy/build/pdf.worker.min.mjs`;
+
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+  const pages: string[] = [];
+
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items.map((item: any) => item.str).join(" ");
+    pages.push(text);
+    page.cleanup();
+  }
+
+  await doc.destroy();
+
   return {
-    rawText: cleanText(textResult.text),
-    pageCount: textResult.pages?.length,
+    rawText: cleanText(pages.join("\n\n")),
+    pageCount: doc.numPages,
   };
 }
 
