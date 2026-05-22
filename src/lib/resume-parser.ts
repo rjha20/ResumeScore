@@ -46,8 +46,11 @@ export async function extractPdf(buffer: Buffer): Promise<ExtractResult> {
 
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
+  const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  const { readFileSync } = require("node:fs");
+  const workerCode = readFileSync(workerPath, "utf-8");
   pdfjs.GlobalWorkerOptions.workerSrc =
-    `https://unpkg.com/pdfjs-dist@5.4.296/legacy/build/pdf.worker.min.mjs`;
+    `data:application/javascript;base64,${Buffer.from(workerCode).toString("base64")}`;
 
   const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
   const pages: string[] = [];
