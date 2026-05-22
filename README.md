@@ -1,68 +1,96 @@
-# AI Resume Analyzer
+# ResumeScore — AI Resume Analyzer
 
 > AI-powered resume analysis to help job seekers optimize their resumes for ATS systems and land more interviews.
 
-A full-stack web application that uses advanced AI models to parse, analyze, and provide actionable feedback on resumes. Get precise ATS compatibility scores, identify missing keywords, and receive personalized career recommendations.
+A full-stack web application that parses PDF/DOCX resumes using AI, scores them against ATS (Applicant Tracking System) standards, and provides actionable feedback. Built with Next.js 16, React 19, PostgreSQL (Prisma), and a failover chain of LLM providers (Groq → DeepSeek).
+
+---
 
 ## ✨ Features
 
-- **Resume Parsing** — Extract structured data (name, skills, experience, education, projects) from PDF and DOCX files automatically
-- **ATS Score Analysis** — Compatibility scoring against job descriptions with keyword matching and formatting assessment
-- **AI-Powered Feedback** — Get actionable suggestions including:
-  - Skill gap analysis and market demand recommendations
-  - Grammar and wording improvements
-  - Better bullet point rewrites using action verbs and metrics
-  - Career advancement paths and role recommendations
-- **Dashboard** — View analysis history, compare multiple resume scores, and track improvements
-- **Real-time Analytics** — Track performance metrics and usage patterns
-- **Multi-Provider AI** — Flexible LLM switching between OpenAI, DeepSeek, and Groq for cost optimization
-- **Secure File Handling** — Encrypted storage with enterprise-grade file validation
-- **Authentication** — Built-in Clerk integration for secure user management
+- **Resume Upload & Parsing** — Drag-and-drop PDF or DOCX upload via UploadThing. Text is extracted server-side and structured into fields (name, skills, experience, education, projects, certifications) using LLM-powered parsing.
+- **ATS Compatibility Scoring** — AI evaluates keyword match, formatting, readability, section scores, and generates targeted improvement suggestions. Optionally accepts a job description for custom scoring.
+- **AI-Powered Feedback** — Four parallel analyses per resume:
+  - **Resume Review** — Strengths, weaknesses, overall rating (0–100)
+  - **Bullet Point Optimization** — Rewrites experience bullets for impact
+  - **Skill Gap Analysis** — Current skills vs. market demand + course recommendations
+  - **Career Suggestions** — Next roles, growth areas, personal branding
+- **Grammar & Style Checks** — Rule-based detection of weak phrases, passive voice, and missing metrics.
+- **Dashboard** — Aggregate stats (total resumes, analyses, average ATS score, average AI rating), ATS score trend chart, score distribution pie chart, and recent analyses list.
+- **Billing / Subscriptions** — Free plan (3 analyses/month), Pro plan (unlimited via Razorpay subscriptions), Enterprise tier. Usage tracked monthly per user.
+- **Dark / Light Theme** — Custom theme context with localStorage persistence.
+- **Secure Authentication** — Clerk integration with webhook-based user sync.
+
+---
 
 ## 🏗️ Architecture
 
-The application follows a modern full-stack architecture:
-
 ```
-Client (Next.js App Router) 
-    ↓
-Server Actions & API Routes
-    ↓
-Service Layer (AI, ATS, Resume Parser, Analytics)
-    ↓
-PostgreSQL Database + External APIs (OpenAI, DeepSeek, Groq, UploadThing)
+Browser (Next.js App Router client components)
+       │
+       ├── Server Actions ──── Parse, analyze, bill
+       ├── API Routes ──────── UploadThing, webhooks, subscriptions
+       └── Static Pages ────── Landing, features, pricing, about
+              │
+              ▼
+         Service Layer
+       ┌────────────┬────────────┬──────────────┐
+       │ Resume     │ ATS        │ AI Analysis   │
+       │ Parser     │ Engine     │ (Groq/DpS)    │
+       │ (pdf-parse,│ (LLM)      │               │
+       │  mammoth)  │            │               │
+       └─────┬──────┴──────┬────┴──────┬────────┘
+             │             │           │
+             ▼             ▼           ▼
+       ┌─────────────────────────────────────┐
+       │       PostgreSQL (Prisma ORM)       │
+       │  User · Resume · Analysis · ATS     │
+       │  AI Feedback · Subscription · Usage │
+       └─────────────────────────────────────┘
+             │             │           │
+             ▼             ▼           ▼
+       External:      External:    External:
+       UploadThing    Clerk        Groq / DeepSeek
+       (file store)   (auth)       (LLM APIs)
+                                   Razorpay
+                                   (subscriptions)
 ```
 
-For a detailed architecture breakdown, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+---
 
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
 | Layer | Technologies |
-|-------|--------------|
-| **Frontend** | Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui, Recharts |
-| **Backend** | Next.js Server Actions, API Routes, Node.js |
-| **Database** | PostgreSQL 15+, Prisma ORM |
-| **Authentication** | Clerk |
-| **File Upload** | UploadThing |
-| **AI/LLM** | OpenAI GPT-4, DeepSeek, Groq Llama |
-| **File Parsing** | pdf-parse, mammoth |
-| **State Management** | Zustand |
-| **Validation** | Zod |
-| **UI Components** | Radix UI, Headless UI |
+|---|---|
+| **Framework** | Next.js 16 (App Router), React 19, TypeScript 5 |
+| **Styling** | Tailwind CSS v4, shadcn/ui (Radix primitives), framer-motion |
+| **State** | Zustand, @tanstack/react-query |
+| **Charts** | Recharts |
+| **Database** | PostgreSQL 15+, Prisma 6 ORM |
+| **Auth** | Clerk (Next.js SDK v7) with Svix webhook verification |
+| **File Upload** | UploadThing v7 |
+| **AI / LLM** | Groq (`llama-3.3-70b-versatile`) → DeepSeek (`deepseek-chat`) failover chain |
+| **File Parsing** | pdf-parse v1 (PDF), mammoth (DOCX) |
+| **Payments** | Razorpay (subscriptions) with HMAC-SHA256 webhook verification |
+| **Validation** | Zod 4 |
+| **Logging** | Structured in-memory logger with typed event enums |
+| **Icons** | lucide-react |
+| **Dates** | date-fns v4 |
+
+---
 
 ## 📋 Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 15+
-- npm or yarn
-- API Keys:
-  - Clerk (authentication)
-  - UploadThing (file storage)
-  - OpenAI or DeepSeek or Groq (LLM)
+- npm
+- API keys for: Clerk, UploadThing, Groq (or DeepSeek), Razorpay (optional)
+
+---
 
 ## 🚀 Getting Started
 
-### 1. Clone and Install
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/rjha20/ai-resume-analyzer.git
@@ -70,225 +98,278 @@ cd ai-resume-analyzer
 npm install
 ```
 
-### 2. Environment Setup
+### 2. Environment Variables
 
-Create a `.env.local` file in the root directory:
+Create a `.env` file in the project root:
 
 ```env
-# Database
+# ─── Database ─────────────────────────────────────────────
 DATABASE_URL="postgresql://user:password@localhost:5432/ai_resume"
 
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
-CLERK_SECRET_KEY=your_clerk_secret
+# ─── Clerk Authentication ─────────────────────────────────
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
-# UploadThing
-UPLOADTHING_SECRET=your_uploadthing_secret
-UPLOADTHING_APP_ID=your_uploadthing_id
+# ─── UploadThing ───────────────────────────────────────────
+UPLOADTHING_TOKEN=eyJ...   # From dashboard → API Keys → v7 tab
 
-# AI Providers (choose at least one)
-OPENAI_API_KEY=your_openai_key
-DEEPSEEK_API_KEY=your_deepseek_key
-GROQ_API_KEY=your_groq_key
+# ─── AI Providers (at least one required) ──────────────────
+GROQ_API_KEY=gsk_...
+DEEPSEEK_API_KEY=sk_...
 
-# App Configuration
+# ─── Razorpay (optional — needed for subscriptions) ───────
+RAZORPAY_KEY_ID=rzp_...
+RAZORPAY_KEY_SECRET=...
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_...
+RAZORPAY_WEBHOOK_SECRET=...
+
+# ─── Clerk Webhook (optional — needed for user sync) ─────
+CLERK_WEBHOOK_SECRET=whsec_...
+
+# ─── App Configuration ───────────────────────────────────
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+Values must be pasted **without** surrounding quotes.
 
 ### 3. Database Setup
 
 ```bash
-# Generate Prisma client
-npm run db:generate
-
-# Run migrations
-npm run db:push
-
-# Seed sample data (optional)
-npm run db:seed
+npm run db:generate     # Generate Prisma client
+npm run db:push         # Sync schema with database
+npm run db:seed         # Seed sample data (optional)
 ```
 
-### 4. Development Server
+### 4. Start Development
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
+
+---
 
 ## 📁 Project Structure
 
 ```
 ai-resume-analyzer/
-├── docs/                          # Documentation
-│   └── ARCHITECTURE.md            # System design & data flow
 ├── prisma/
-│   ├── schema.prisma              # Database schema
-│   └── seed.ts                    # Sample data
-├── public/                        # Static assets
+│   ├── schema.prisma          # 7 models (User, Resume, Analysis, AtsReport,
+│   │                          #   AiFeedback, Subscription, UsageRecord, WebhookEvent)
+│   └── seed.ts
 ├── src/
-│   ├── app/                       # Next.js App Router
-│   │   ├── api/                   # API routes & webhooks
-│   │   ├── (auth)/                # Authentication pages
-│   │   ├── dashboard/             # Protected dashboard
-│   │   ├── page.tsx               # Landing page
-│   │   └── globals.css            # Global styles
-│   ├── components/                # React components
-│   │   ├── layout/                # Navigation, footer
-│   │   ├── dashboard/             # Dashboard widgets
-│   │   ├── resume/                # Resume analysis UI
-│   │   ├── ui/                    # Base UI components
-│   │   └── upload/                # File upload
-│   ├── actions/                   # Server actions
-│   │   ├── analyze-ai.ts          # AI analysis
-│   │   ├── analyze-ats.ts         # ATS analysis
-│   │   ├── parse-resume.ts        # Resume parsing
-│   │   └── billing.ts             # Billing operations
-│   ├── features/                  # Feature modules
-│   │   ├── auth/                  # Authentication logic
-│   │   ├── resumes/               # Resume management
-│   │   ├── ats/                   # ATS engine
-│   │   ├── ai/                    # AI service
-│   │   ├── dashboard/             # Dashboard logic
-│   │   ├── analytics/             # Analytics
-│   │   └── billing/               # Subscription management
-│   ├── lib/                       # Utilities & services
-│   │   ├── ai-parser.ts           # Resume parsing with AI
-│   │   ├── ai-analyzer.ts         # AI feedback engine
-│   │   ├── ats-analyzer.ts        # ATS scoring
-│   │   ├── auth.ts                # Auth utilities
-│   │   ├── prisma.ts              # Prisma client
-│   │   ├── logger.ts              # Logging
-│   │   └── utils.ts               # Helper functions
-│   ├── schemas/                   # Zod validation schemas
-│   ├── types/                     # TypeScript types
-│   ├── hooks/                     # Custom React hooks
-│   └── store/                     # Zustand state management
-├── package.json
+│   ├── app/
+│   │   ├── (auth)/            # Sign-in / sign-up (Clerk components)
+│   │   ├── about/
+│   │   ├── api/
+│   │   │   ├── billing/subscription/
+│   │   │   ├── resume/[id]/
+│   │   │   ├── uploadthing/   # UploadThing route handler + file router
+│   │   │   └── webhooks/      # Clerk (Svix) + Razorpay (HMAC)
+│   │   ├── contact/
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx       # Stats, charts, resume history
+│   │   │   ├── resume-new/    # Upload page
+│   │   │   └── resume/[id]/   # Single analysis detail
+│   │   ├── features/
+│   │   ├── layout.tsx         # Root: ClerkProvider, Navbar, Footer
+│   │   ├── page.tsx           # Landing page
+│   │   ├── pricing/           # Plans + Razorpay checkout
+│   │   └── globals.css        # Tailwind v4 + CSS custom properties
+│   ├── actions/               # Server Actions
+│   │   ├── parse-resume.ts    # Upload → parse → store pipeline
+│   │   ├── analyze-ai.ts      # 4 parallel AI analyses
+│   │   ├── analyze-ats.ts     # ATS scoring
+│   │   ├── billing.ts         # Billing summary
+│   │   └── get-dashboard-stats.ts
+│   ├── components/
+│   │   ├── billing/           # Razorpay checkout button
+│   │   ├── dashboard/         # Charts, stats cards, history list
+│   │   ├── layout/            # Navbar, Footer
+│   │   ├── providers.tsx      # Custom ThemeProvider (dark/light)
+│   │   ├── ui/                # shadcn/ui primitives (button, card, input)
+│   │   └── upload/            # Drag-and-drop upload with progress
+│   ├── hooks/                 # useDebounce, useMounted, useStableCallback
+│   ├── lib/
+│   │   ├── ai-parser.ts       # Resume text → structured JSON (LLM)
+│   │   ├── ai-analyzer.ts     # Full AI analysis (4 parallel LLM calls)
+│   │   ├── ai-cache.ts        # In-memory cache with TTL + LRU eviction
+│   │   ├── ats-analyzer.ts    # ATS scoring via LLM
+│   │   ├── auth.ts            # Clerk auth helpers + DB user sync
+│   │   ├── billing.ts         # Plan limits, usage tracking
+│   │   ├── errors.ts          # Typed error hierarchy
+│   │   ├── logger.ts          # Structured event logging
+│   │   ├── prisma.ts          # Singleton Prisma client (pooling config)
+│   │   ├── rate-limiter.ts    # In-memory sliding window rate limiter
+│   │   ├── razorpay.ts        # Razorpay subscription API wrapper
+│   │   ├── resume-parser.ts   # PDF (pdf-parse) + DOCX (mammoth) extraction
+│   │   ├── security.ts        # Input sanitization, file validation
+│   │   └── utils.ts           # cn(), formatDate(), score colors, etc.
+│   ├── proxy.ts               # Clerk middleware (route protection)
+│   ├── schemas/               # Zod validation schemas
+│   ├── store/                 # Zustand stores (theme, upload, analysis)
+│   └── types/                 # TypeScript interfaces + module declarations
+├── next.config.ts             # Images, server actions body limit
 ├── tsconfig.json
-├── tailwind.config.js
-├── next.config.ts
-└── .env.local                     # Environment variables (not in repo)
+└── .env                       # Local env vars (not in repo)
 ```
+
+---
 
 ## 🔄 Data Flow
 
-### Resume Analysis Workflow
+### Resume Analysis Pipeline
 
-1. **Upload** — User uploads PDF/DOCX via drag-and-drop
-2. **Parse** — Resume text extracted using pdf-parse/mammoth
-3. **Structure** — AI extracts structured data (name, skills, experience, education)
-4. **ATS Analysis** — Engine scores against job description, finds keyword gaps
-5. **AI Analysis** — LLM provides feedback on:
-   - Overall resume quality
-   - Skill improvements
-   - Bullet point rewrites
-   - Career recommendations
-6. **Store** — Results saved to PostgreSQL
-7. **Display** — Dashboard shows scores, charts, and suggestions
+```
+1. UPLOAD
+   User drops file → UploadThing client uploads to cloud storage
+   (PDF or DOCX, max 8 MB, validated client-side)
+
+2. DOWNLOAD
+   Server Action downloads file from UploadThing URL into a Buffer
+
+3. EXTRACT
+   PDF → pdf-parse (v1, bundles pdfjs-dist internally, no worker)
+   DOCX → mammoth
+   Produces: raw text
+
+4. AI PARSE
+   LLM (Groq → DeepSeek fallback) extracts structured data:
+   name, email, phone, skills, experience, education, projects, certifications
+
+5. SAVE
+   Resume record created in PostgreSQL with raw text + parsed JSON
+
+6. ANALYZE (optional, separate action)
+   ┌─ ATS Analysis: LLM scores keyword match, formatting, readability,
+   │                section scores + suggestions
+   ├─ AI Review:    LLM evaluates strengths, weaknesses, overall rating
+   ├─ Bullet Points: LLM rewrites experience bullets for impact
+   ├─ Skill Gaps:   LLM identifies market demand gaps + course recommendations
+   └─ Career:       LLM suggests next roles and growth areas
+
+7. DISPLAY
+   Dashboard shows scores, charts, trend lines, and detailed feedback
+```
+
+### Authentication Flow
+
+```
+1. Clerk middleware protects all routes except public ones
+2. Sign-in/sign-up via Clerk's prebuilt components
+3. Webhook (Svix-verified) syncs Clerk user → local DB on create/update/delete
+4. Server actions call requireAuth() which:
+   a. Reads Clerk auth from request context
+   b. Upserts user into local DB (email, name, image)
+   c. Returns the DB user record
+```
+
+---
 
 ## 🧠 AI Integration
 
-The app uses a multi-provider strategy for LLM calls:
+### Provider Chain
 
-- **Primary**: OpenAI GPT-4 (most accurate)
-- **Fallback 1**: DeepSeek (cost-effective)
-- **Fallback 2**: Groq (fast inference)
+| Priority | Provider | Model | Env Variable |
+|---|---|---|---|
+| 1st | **Groq** | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
+| 2nd | **DeepSeek** | `deepseek-chat` | `DEEPSEEK_API_KEY` |
 
-If one provider fails, the system automatically retries with the next available provider. This ensures reliability and cost optimization.
+All LLM calls use a shared OpenAI-compatible client. If the primary provider fails (missing key, API error, empty response), the system automatically retries with the fallback. If all providers fail, a detailed error is thrown listing every failure.
 
-**Supported AI Features:**
-- Resume parsing with structured extraction
-- Keyword matching for ATS compatibility
-- Grammar and writing quality assessment
-- Bullet point optimization with metrics
-- Skill gap analysis
-- Career path recommendations
+**Used in three modules:**
+- **`ai-parser.ts`** — Single LLM call to structure raw text → `ParsedResume` JSON
+- **`ai-analyzer.ts`** — 4 parallel LLM calls (review, bullets, skill gaps, career). Results cached in memory (MD5 key, configurable TTL, LRU eviction at 200 entries)
+- **`ats-analyzer.ts`** — Single LLM call for ATS scoring + suggestions
 
-## 📊 Database Schema
+### Caching (`lib/ai-cache.ts`)
 
-Key entities:
-- **User** → Connected to Clerk authentication
-- **Resume** → Uploaded resumes with metadata
-- **Analysis** → Results from ATS and AI analysis
-- **ATSReport** → Keyword matching, scoring
-- **AIAnalysis** → Feedback and suggestions
-- **Subscription** → Billing & usage limits
-- **UsageTracking** → API call monitoring
+- In-memory `Map` with configurable TTLs: 24h (analysis), 7d (parsing), 1h (errors)
+- Cache key = MD5 hash of resume text (first 5000 chars)
+- LRU-style eviction: entries sorted by hit count, lowest dropped when >200 entries
+- Cleanup interval: every 5 minutes
 
-See `prisma/schema.prisma` for the complete schema.
+---
 
 ## 🔐 Security
 
-- **Row-Level Security** — All queries filtered by authenticated user ID
-- **File Validation** — Type and size checks before upload
-- **Encrypted Storage** — Files encrypted at rest via UploadThing
-- **Rate Limiting** — Per-user API call throttling
-- **Input Sanitization** — Zod schemas validate all inputs
-- **Environment Variables** — Sensitive keys stored in `.env.local`
+- **Authentication** — Clerk middleware protects all non-public routes
+- **Row-Level Access** — All DB queries filtered by authenticated user ID
+- **Input Validation** — Zod schemas validate every server action input
+- **Input Sanitization** — HTML tag stripping, XSS prevention on file names and titles
+- **File Validation** — MIME type + extension + size checks on both client and server
+- **Rate Limiting** — In-memory sliding window per user:
+  | Scope | Limit | Window |
+  |---|---|---|
+  | AI Analysis | 5 | 1 hour |
+  | ATS Analysis | 10 | 1 hour |
+  | Resume Upload | 5 | 1 hour |
+- **Webhook Verification** — Svix (Clerk) + HMAC-SHA256 (Razorpay)
+- **Environment Variables** — All secrets in `.env`, never committed
+
+---
+
+## 💳 Billing & Subscriptions
+
+| Plan | Resume Uploads | AI Generations | Price |
+|---|---|---|---|
+| **Free** | 3 / month | 3 / month | $0 |
+| **Pro** | 50 / month | 100 / month | Via Razorpay |
+| **Enterprise** | 1000 / month | 5000 / month | Custom |
+
+Usage is tracked per calendar month via the `UsageRecord` table. `assertUsageAvailable()` checks quota before executing an action; `recordUsage()` increments after success.
+
+Pro subscriptions are managed through **Razorpay** — the client-side checkout button loads Razorpay's JS SDK, creates a subscription via a server API route, and redirects to Razorpay's checkout. Webhooks handle `subscription.charged`, `cancelled`, `completed`, and `payment.failed` events (idempotent via `WebhookEvent` table).
+
+---
 
 ## 📦 Available Scripts
 
 ```bash
 # Development
 npm run dev              # Start dev server
-npm run lint            # Run ESLint
-npm run lint:fix        # Fix linting issues
-npm run format          # Format with Prettier
-npm run typecheck       # Type-check with TypeScript
+npm run lint             # Run ESLint
+npm run typecheck        # TypeScript type checking
 
 # Database
-npm run db:generate     # Generate Prisma client
-npm run db:push         # Sync schema with database
-npm run db:migrate      # Create migrations
-npm run db:studio       # Open Prisma Studio
-npm run db:seed         # Seed sample data
+npm run db:generate      # Generate Prisma client
+npm run db:push          # Push schema to database
+npm run db:migrate       # Create a migration
+npm run db:studio        # Open Prisma Studio
+npm run db:seed          # Seed sample data
 
 # Production
-npm run build           # Build for production
-npm run start           # Start production server
+npm run build            # Build for production
+npm run start            # Start production server
 ```
 
-## 🌐 Deployment
+---
 
-### Vercel (Recommended)
+## 🌐 Deployment (Vercel)
 
-```bash
-# Push to GitHub, then connect to Vercel
-```
+1. Push the repo to GitHub
+2. Connect to Vercel
+3. Add all environment variables from `.env` (values **without** quotes) in Vercel's dashboard
+4. Deploy — Vercel handles the rest
 
-Vercel automatically handles:
-- Environment variables
-- Automatic deployments on push
-- PostgreSQL database hosting via Vercel Storage
+**Important:** Set `NEXT_PUBLIC_APP_URL` to your Vercel deployment URL (e.g., `https://your-app.vercel.app`).
 
-### Docker
-
-```bash
-docker build -t ai-resume-analyzer .
-docker run -p 3000:3000 ai-resume-analyzer
-```
-
-### Self-Hosted
-
-1. Deploy Next.js app to VPS/EC2
-2. Set up PostgreSQL database
-3. Configure environment variables
-4. Set up CI/CD pipeline
+---
 
 ## 🤝 Contributing
-
-Contributions are welcome! Please:
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
 3. Commit changes: `git commit -am 'Add feature'`
 4. Push to branch: `git push origin feature/my-feature`
 5. Open a Pull Request
+
+---
 
 ## 📝 License
 
@@ -300,17 +381,3 @@ MIT License — see LICENSE file for details.
 
 - GitHub: [@rjha20](https://github.com/rjha20)
 - LinkedIn: [rohan-jha-12556b257](https://www.linkedin.com/in/rohan-jha-12556b257/)
-
-## 🆘 Support
-
-- **Issues**: Report bugs via GitHub Issues
-- **Discussions**: Ask questions in GitHub Discussions
-- **Email**: Contact via the website
-
-## 📚 Additional Resources
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma Documentation](https://www.prisma.io/docs/)
-- [Clerk Documentation](https://clerk.com/docs)
-- [UploadThing Documentation](https://docs.uploadthing.com/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)

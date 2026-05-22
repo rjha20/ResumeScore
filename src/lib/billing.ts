@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-export type BillingPlan = "free" | "pro" | "enterprise";
+export type BillingPlan = "free" | "pro" | "team" | "enterprise";
 export type UsageKind = "resume_upload" | "ai_generation";
 
 export interface PlanLimits {
@@ -26,6 +26,10 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
     resumeUploads: 50,
     aiGenerations: 100,
   },
+  team: {
+    resumeUploads: 200,
+    aiGenerations: 500,
+  },
   enterprise: {
     resumeUploads: 1000,
     aiGenerations: 5000,
@@ -34,12 +38,12 @@ export const PLAN_LIMITS: Record<BillingPlan, PlanLimits> = {
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
   "active",
-  "authenticated",
-  "charged",
+  "trialing",
+  "complete",
 ]);
 
 function normalizePlan(plan: string | null | undefined): BillingPlan {
-  if (plan === "pro" || plan === "enterprise") return plan;
+  if (plan === "pro" || plan === "team" || plan === "enterprise") return plan;
   return "free";
 }
 

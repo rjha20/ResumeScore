@@ -21,9 +21,15 @@ const plans = [
     cta: "Upgrade monthly", popular: true,
   },
   {
+    name: "Team", price: "₹999", period: "month",
+    description: "For professional teams",
+    features: ["Everything in Pro", "Up to 5 team members", "Shared workspace", "Bulk analysis", "Priority support", "Custom branding"],
+    cta: "Start team monthly", popular: false,
+  },
+  {
     name: "Enterprise", price: "Custom", period: "",
-    description: "For teams and agencies",
-    features: ["Everything in Pro", "Bulk analysis", "Team workspace", "API access", "Priority support", "Custom branding"],
+    description: "For large organizations",
+    features: ["Everything in Team", "Unlimited members", "API access", "Dedicated account manager", "SSO / SAML", "Custom integrations"],
     cta: "Contact sales", popular: false,
   },
 ];
@@ -44,7 +50,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="mt-10 grid md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+        <div className="mt-10 grid md:grid-cols-4 gap-5 max-w-5xl mx-auto">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -74,13 +80,22 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                {plan.name === "Pro" ? (
+                {plan.name === "Pro" || plan.name === "Team" ? (
                   <div className="mt-5 space-y-2">
-                    <CheckoutButton cycle="monthly" className="w-full">
+                    <CheckoutButton
+                      cycle="monthly"
+                      plan={plan.name.toLowerCase() as "pro" | "team"}
+                      className="w-full"
+                    >
                       {plan.cta}
                     </CheckoutButton>
-                    <CheckoutButton cycle="yearly" className="w-full" variant="outline">
-                      Upgrade yearly · ₹4,999
+                    <CheckoutButton
+                      cycle="yearly"
+                      plan={plan.name.toLowerCase() as "pro" | "team"}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {plan.name === "Pro" ? "Yearly · ₹4,999" : "Yearly · ₹9,999"}
                     </CheckoutButton>
                   </div>
                 ) : (

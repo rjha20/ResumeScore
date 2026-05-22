@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { getDashboardStats, getAtsTrend } from "@/actions/get-dashboard-stats";
+import { verifyCheckoutSession } from "@/actions/verify-checkout";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { AtsChart } from "@/components/dashboard/ats-chart";
 import { ResumeHistory } from "@/components/dashboard/resume-history";
@@ -28,6 +29,17 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboard() {
       try {
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("session_id");
+        if (sessionId) {
+          const result = await verifyCheckoutSession(sessionId);
+          if (result.success) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("session_id");
+            window.history.replaceState({}, "", url.toString());
+          }
+        }
+
         const [statsResult, trendResult] = await Promise.all([
           getDashboardStats(),
           getAtsTrend(),

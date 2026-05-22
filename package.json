@@ -52,6 +52,7 @@
     "react-dropzone": "^15.0.0",
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
+    "stripe": "^22.1.1",
     "svix": "^1.94.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
