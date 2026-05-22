@@ -2,7 +2,6 @@
 
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { downloadFile, extractText } from "@/lib/resume-parser";
 import { parseWithAI } from "@/lib/ai-parser";
 import { resumeUploadSchema } from "@/schemas";
 import { checkActionRateLimit } from "@/lib/rate-limiter";
@@ -87,6 +86,7 @@ export async function parseResume(
     });
 
     const startTime = Date.now();
+    const { downloadFile, extractText } = await import("@/lib/resume-parser");
     const buffer = await downloadFile(fileUrl);
     const { rawText } = await extractText(buffer, fileType);
     const parsedData = await parseWithAI(rawText);
