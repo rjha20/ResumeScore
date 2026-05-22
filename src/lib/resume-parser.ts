@@ -1,4 +1,5 @@
 import mammoth from "mammoth";
+import pdfParse from "pdf-parse";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ExtractResult {
@@ -20,54 +21,10 @@ function cleanText(text: string): string {
 
 // ─── PDF Extraction ─────────────────────────────────────────────────
 export async function extractPdf(buffer: Buffer): Promise<ExtractResult> {
-  if (typeof globalThis.DOMMatrix === "undefined") {
-    (globalThis as any).DOMMatrix = class DOMMatrix {
-      a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
-      m11 = 1; m12 = 0; m13 = 0; m14 = 0;
-      m21 = 0; m22 = 1; m23 = 0; m24 = 0;
-      m31 = 0; m32 = 0; m33 = 1; m34 = 0;
-      m41 = 0; m42 = 0; m43 = 0; m44 = 1;
-      get isIdentity() { return true; }
-      static fromMatrix() { return new DOMMatrix(); }
-      static fromFloat64Array() { return new DOMMatrix(); }
-      invertSelf() { return this; }
-      multiplySelf() { return this; }
-      translateSelf() { return this; }
-      scaleSelf() { return this; }
-      rotateSelf() { return this; }
-      skewXSelf() { return this; }
-      skewYSelf() { return this; }
-      flipX() { return new DOMMatrix(); }
-      flipY() { return new DOMMatrix(); }
-      toFloat64Array() { return new Float64Array(16); }
-      toString() { return ""; }
-    };
-  }
-
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-
-  const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-  const { readFileSync } = require("node:fs");
-  const workerCode = readFileSync(workerPath, "utf-8");
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    `data:application/javascript;base64,${Buffer.from(workerCode).toString("base64")}`;
-
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
-  const pages: string[] = [];
-
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items.map((item: any) => item.str).join(" ");
-    pages.push(text);
-    page.cleanup();
-  }
-
-  await doc.destroy();
-
+  const data = await pdfParse(buffer);
   return {
-    rawText: cleanText(pages.join("\n\n")),
-    pageCount: doc.numPages,
+    rawText: cleanText(data.text),
+    pageCount: data.numpages,
   };
 }
 
